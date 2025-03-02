@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { User, Package, Heart, LogOut, ShoppingBag, Settings, MapPin, Clock, CheckCircle, ChevronRight } from 'lucide-react';
+import { User, Package, Heart, LogOut, ShoppingBag, Settings, MapPin, Clock, CheckCircle, ChevronRight, Truck, XCircle } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
