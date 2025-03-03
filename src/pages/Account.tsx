@@ -1,8 +1,8 @@
 
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { User, Package, Heart, LogOut, ShoppingBag, Settings, MapPin, Clock, CheckCircle, ChevronRight, Truck, XCircle } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -71,34 +71,9 @@ const statusMap = {
 };
 
 const Account = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentTab, setCurrentTab] = useState('orders');
-  const [orders, setOrders] = useState(ordersData);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  
-  useEffect(() => {
-    // Check if user is logged in
-    const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    setIsLoggedIn(loggedIn);
-    
-    if (!loggedIn) {
-      navigate('/login');
-    }
-  }, [navigate]);
-  
-  const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userName');
-    
-    toast({
-      title: "Déconnexion réussie",
-      description: "Vous avez été déconnecté avec succès.",
-      duration: 3000
-    });
-    
-    navigate('/login');
-  };
+  const [orders] = useState(ordersData);
+  const { user, signOut } = useAuth();
   
   const renderTabContent = () => {
     switch (currentTab) {
@@ -225,7 +200,7 @@ const Account = () => {
                       <input
                         type="text"
                         className="w-full px-4 py-2 rounded-md border border-souk-300 focus:ring-2 focus:ring-souk-500 focus:border-transparent"
-                        defaultValue="Mohamed"
+                        defaultValue={user?.name?.split(' ')[0] || ''}
                         placeholder="Prénom"
                       />
                     </div>
@@ -237,7 +212,7 @@ const Account = () => {
                       <input
                         type="text"
                         className="w-full px-4 py-2 rounded-md border border-souk-300 focus:ring-2 focus:ring-souk-500 focus:border-transparent"
-                        defaultValue="Alami"
+                        defaultValue={user?.name?.split(' ')[1] || ''}
                         placeholder="Nom"
                       />
                     </div>
@@ -250,8 +225,9 @@ const Account = () => {
                     <input
                       type="email"
                       className="w-full px-4 py-2 rounded-md border border-souk-300 focus:ring-2 focus:ring-souk-500 focus:border-transparent"
-                      defaultValue="mohamed.alami@example.com"
+                      defaultValue={user?.email || ''}
                       placeholder="Email"
+                      readOnly
                     />
                   </div>
                   
@@ -350,10 +326,6 @@ const Account = () => {
     }
   };
   
-  if (!isLoggedIn) {
-    return null; // Will redirect to login via useEffect
-  }
-  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -371,14 +343,16 @@ const Account = () => {
               <div className="flex items-center space-x-4 mb-6">
                 <div className="w-12 h-12 rounded-full bg-souk-700 flex items-center justify-center text-white">
                   <span className="text-xl font-bold">
-                    {localStorage.getItem('userName')?.charAt(0) || 'U'}
+                    {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
                   </span>
                 </div>
                 <div>
                   <p className="font-medium text-souk-900">
-                    {localStorage.getItem('userName') || 'Utilisateur'}
+                    {user?.name || user?.email}
                   </p>
-                  <p className="text-sm text-souk-500">Client</p>
+                  <p className="text-sm text-souk-500 capitalize">
+                    {user?.role || 'Client'}
+                  </p>
                 </div>
               </div>
               
@@ -421,7 +395,7 @@ const Account = () => {
                 
                 <button
                   className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-red-600 hover:bg-red-50 transition-colors"
-                  onClick={handleLogout}
+                  onClick={signOut}
                 >
                   <LogOut size={20} />
                   <span>Déconnexion</span>

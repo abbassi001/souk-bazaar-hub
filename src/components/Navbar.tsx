@@ -2,10 +2,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, User, Menu, X, Search } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -42,6 +44,9 @@ const Navbar = () => {
           <Link to="/products" className="text-souk-800 hover-underline">Products</Link>
           <Link to="/categories" className="text-souk-800 hover-underline">Categories</Link>
           <Link to="/about" className="text-souk-800 hover-underline">About</Link>
+          {user?.role === 'seller' && (
+            <Link to="/dashboard" className="text-souk-800 hover-underline">Dashboard</Link>
+          )}
         </nav>
 
         {/* Desktop Right Icons */}
@@ -49,7 +54,7 @@ const Navbar = () => {
           <button className="text-souk-800 hover:text-souk-600 transition-colors">
             <Search size={20} />
           </button>
-          <Link to="/account" className="text-souk-800 hover:text-souk-600 transition-colors">
+          <Link to={user ? "/account" : "/login"} className="text-souk-800 hover:text-souk-600 transition-colors">
             <User size={20} />
           </Link>
           <Link to="/cart" className="text-souk-800 hover:text-souk-600 transition-colors relative">
@@ -101,14 +106,23 @@ const Navbar = () => {
             >
               About
             </Link>
+            {user?.role === 'seller' && (
+              <Link 
+                to="/dashboard" 
+                className="text-souk-800 py-2 border-b border-souk-100"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+            )}
             <div className="flex items-center space-x-6 py-2">
               <Link 
-                to="/account" 
+                to={user ? "/account" : "/login"} 
                 className="text-souk-800 flex items-center space-x-2"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <User size={18} />
-                <span>Account</span>
+                <span>{user ? 'Account' : 'Login'}</span>
               </Link>
               <Link 
                 to="/cart" 

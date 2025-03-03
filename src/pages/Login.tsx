@@ -1,8 +1,8 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, ArrowRight } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Mail, Lock, User, ArrowRight, UserCircle } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -11,30 +11,24 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [role, setRole] = useState<'buyer' | 'seller'>('buyer');
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { signIn, signUp, user } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    // If user is already logged in, redirect based on role
+    if (user) {
+      navigate(user.role === 'seller' ? '/dashboard' : '/products');
+    }
+  }, [user, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simulation d'authentification - à remplacer par une vraie API
     if (isLogin) {
-      console.log('Login attempt:', { email, password });
-      
-      // Simulation d'une connexion réussie
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userName', 'User');
-      navigate('/account');
+      await signIn(email, password);
     } else {
-      console.log('Register attempt:', { name, email, password });
-      
-      // Simulation d'une inscription réussie
-      toast({
-        title: "Inscription réussie!",
-        description: "Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.",
-        duration: 5000
-      });
-      
+      await signUp(email, password, name, role);
       setIsLogin(true);
     }
   };
@@ -71,25 +65,59 @@ const Login = () => {
             
             <form onSubmit={handleSubmit} className="space-y-5">
               {!isLogin && (
-                <div className="space-y-2">
-                  <label htmlFor="name" className="block text-sm font-medium text-souk-700">
-                    Nom complet
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-souk-500">
-                      <User size={18} />
+                <>
+                  <div className="space-y-2">
+                    <label htmlFor="name" className="block text-sm font-medium text-souk-700">
+                      Nom complet
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-souk-500">
+                        <User size={18} />
+                      </div>
+                      <input
+                        type="text"
+                        id="name"
+                        className="pl-10 w-full px-4 py-3 rounded-md border border-souk-300 focus:ring-2 focus:ring-souk-500 focus:border-transparent"
+                        placeholder="Votre nom complet"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required={!isLogin}
+                      />
                     </div>
-                    <input
-                      type="text"
-                      id="name"
-                      className="pl-10 w-full px-4 py-3 rounded-md border border-souk-300 focus:ring-2 focus:ring-souk-500 focus:border-transparent"
-                      placeholder="Votre nom complet"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required={!isLogin}
-                    />
                   </div>
-                </div>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="role" className="block text-sm font-medium text-souk-700">
+                      Type de compte
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        className={`p-3 flex items-center justify-center border rounded-md cursor-pointer ${
+                          role === 'buyer' 
+                            ? 'bg-souk-100 border-souk-700 text-souk-900' 
+                            : 'border-souk-300 text-souk-700'
+                        }`}
+                        onClick={() => setRole('buyer')}
+                      >
+                        <User size={18} className="mr-2" />
+                        Acheteur
+                      </button>
+                      <button
+                        type="button"
+                        className={`p-3 flex items-center justify-center border rounded-md cursor-pointer ${
+                          role === 'seller' 
+                            ? 'bg-souk-100 border-souk-700 text-souk-900' 
+                            : 'border-souk-300 text-souk-700'
+                        }`}
+                        onClick={() => setRole('seller')}
+                      >
+                        <UserCircle size={18} className="mr-2" />
+                        Vendeur
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
               
               <div className="space-y-2">
