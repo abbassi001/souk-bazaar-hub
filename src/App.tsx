@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
@@ -41,7 +41,7 @@ const App = () => (
             <Route 
               path="/checkout" 
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="buyer">
                   <Checkout />
                 </ProtectedRoute>
               } 
@@ -65,6 +65,17 @@ const App = () => (
             <Route path="/products" element={<Products />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/about" element={<About />} />
+            
+            {/* Redirect common misspellings or alternate routes */}
+            <Route path="/home" element={<Navigate to="/" replace />} />
+            <Route path="/panier" element={<Navigate to="/cart" replace />} />
+            <Route path="/connexion" element={<Navigate to="/login" replace />} />
+            <Route path="/compte" element={<Navigate to="/account" replace />} />
+            <Route path="/produits" element={<Navigate to="/products" replace />} />
+            <Route path="/categorie" element={<Navigate to="/categories" replace />} />
+            <Route path="/categorie/:id" element={<Navigate to="/categories" replace />} />
+            <Route path="/about-us" element={<Navigate to="/about" replace />} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
