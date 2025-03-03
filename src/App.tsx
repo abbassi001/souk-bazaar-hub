@@ -13,6 +13,7 @@ import Checkout from "./pages/Checkout";
 import Account from "./pages/Account";
 import Products from "./pages/Products";
 import Categories from "./pages/Categories";
+import CategoryDetail from "./pages/CategoryDetail";
 import About from "./pages/About";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -64,6 +65,7 @@ const App = () => (
             />
             <Route path="/products" element={<Products />} />
             <Route path="/categories" element={<Categories />} />
+            <Route path="/category/:id" element={<CategoryDetail />} />
             <Route path="/about" element={<About />} />
             
             {/* Redirect common misspellings or alternate routes */}
@@ -73,7 +75,7 @@ const App = () => (
             <Route path="/compte" element={<Navigate to="/account" replace />} />
             <Route path="/produits" element={<Navigate to="/products" replace />} />
             <Route path="/categorie" element={<Navigate to="/categories" replace />} />
-            <Route path="/categorie/:id" element={<Navigate to="/categories" replace />} />
+            <Route path="/categorie/:id" element={<Navigate to="/category/:id" replace />} />
             <Route path="/about-us" element={<Navigate to="/about" replace />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
