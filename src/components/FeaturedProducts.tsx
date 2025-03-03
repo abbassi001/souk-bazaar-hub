@@ -3,6 +3,11 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ProductCard from './ProductCard';
 
+// Type pour la fonction de clic sur produit
+interface FeaturedProductsProps {
+  onProductClick?: (productId: string) => void;
+}
+
 // Mock data for featured products
 const mockProducts = [
   {
@@ -37,7 +42,7 @@ const mockProducts = [
   }
 ];
 
-const FeaturedProducts = () => {
+const FeaturedProducts = ({ onProductClick }: FeaturedProductsProps) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -62,6 +67,12 @@ const FeaturedProducts = () => {
       }
     };
   }, []);
+
+  const handleProductClick = (productId: string) => {
+    if (onProductClick) {
+      onProductClick(productId);
+    }
+  };
 
   return (
     <section 
@@ -102,8 +113,16 @@ const FeaturedProducts = () => {
               className={`transition-all duration-700 opacity-0 translate-y-8
                         ${isVisible ? 'opacity-100 translate-y-0' : ''}`}
               style={{ transitionDelay: `${300 + index * 100}ms` }}
+              onClick={() => handleProductClick(product.id)}
             >
-              <ProductCard {...product} />
+              <ProductCard 
+                id={product.id}
+                name={product.name}
+                price={product.price}
+                image={product.image}
+                category={product.category}
+                isNew={product.isNew}
+              />
             </div>
           ))}
         </div>
