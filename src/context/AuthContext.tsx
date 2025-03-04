@@ -36,36 +36,59 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setUser(session ? getUserFromSession(session) : null);
-      setIsLoading(false);
+      if (session) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setUser(null);
+        setIsLoading(false);
+      }
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
-      setUser(session ? getUserFromSession(session) : null);
-      setIsLoading(false);
+      if (session) {
+        await fetchUserProfile(session.user.id);
+      } else {
+        setUser(null);
+        setIsLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const getUserFromSession = (session: Session): UserData => {
-    const role = localStorage.getItem('userRole') as UserRole || 'buyer';
-    const name = localStorage.getItem('userName') || undefined;
-    
-    return {
-      id: session.user.id,
-      email: session.user.email || '',
-      role,
-      name
-    };
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        setUser(null);
+      } else if (data) {
+        setUser({
+          id: data.id,
+          email: data.email,
+          role: data.role as UserRole,
+          name: data.name
+        });
+      }
+    } catch (error) {
+      console.error('Unexpected error fetching profile:', error);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const signUp = async (email: string, password: string, name: string, role: UserRole) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -77,13 +100,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) throw error;
-
-      localStorage.setItem('userName', name);
-      localStorage.setItem('userRole', role);
       
       toast({
         title: "Inscription réussie!",
-        description: "Votre compte a été créé avec succès.",
+        description: "Votre compte a été créé avec succès. Veuillez vérifier votre email pour confirmer votre inscription.",
         duration: 5000
       });
     } catch (error: any) {
@@ -108,22 +128,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) throw error;
 
-      // Get user metadata
-      const userData = data.user?.user_metadata;
-      if (userData) {
-        localStorage.setItem('userName', userData.name || 'User');
-        localStorage.setItem('userRole', userData.role || 'buyer');
-      }
-
       toast({
         title: "Connexion réussie!",
         description: "Vous êtes maintenant connecté.",
         duration: 3000
       });
 
-      // Redirect based on role
-      const role = userData?.role || localStorage.getItem('userRole') || 'buyer';
-      navigate(role === 'seller' ? '/dashboard' : '/products');
+      // Redirect based on role (from the profile data)
+      if (data?.user) {
+        await fetchUserProfile(data.user.id);
+      }
     } catch (error: any) {
       toast({
         title: "Erreur de connexion",
@@ -139,9 +153,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      localStorage.removeItem('userName');
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('isLoggedIn');
       
       toast({
         title: "Déconnexion réussie",
@@ -159,6 +170,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
     }
   };
+
+  // Redirect user based on role when user data is loaded
+  useEffect(() => {
+    if (user && !isLoading) {
+      // After login and profile fetch, redirect based on role
+      navigate(user.role === 'seller' ? '/dashboard' : '/products');
+    }
+  }, [user, isLoading, navigate]);
 
   const value = {
     user,

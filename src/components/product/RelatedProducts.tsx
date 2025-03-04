@@ -19,6 +19,7 @@ const RelatedProducts = ({ products }: RelatedProductsProps) => {
             price={product.price}
             image={product.image}
             category={product.category}
+            isNew={product.is_new}
           />
         ))}
       </div>

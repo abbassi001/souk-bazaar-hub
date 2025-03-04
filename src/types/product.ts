@@ -2,19 +2,18 @@
 export interface Product {
   id: string;
   name: string;
+  description?: string;
   price: number;
-  oldPrice?: number;
+  old_price?: number;
   image: string;
-  rating?: number; // Maintenant optionnel
-  reviews?: number; // Maintenant optionnel
-  isNew?: boolean;
-  isFeatured?: boolean;
+  rating?: number;
+  reviews?: number;
+  is_new?: boolean;
+  is_featured?: boolean;
   category: string;
-  seller?: { // Maintenant optionnel
-    name: string;
-    location: string;
-    isVerified: boolean;
-  };
+  seller_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export type CategoryName = 'home-decor' | 'textiles' | 'jewelry' | 'ceramics' | 'spices' | 'leather' | 'furniture' | 'lighting';

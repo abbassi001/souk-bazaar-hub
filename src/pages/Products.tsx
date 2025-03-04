@@ -6,79 +6,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ProductGrid from '../components/category/ProductGrid';
 import { Product } from '@/types/product';
-
-// Mock products data - to be replaced with API calls
-const mockProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Handmade Ceramic Vase',
-    price: 49.99,
-    image: 'https://images.unsplash.com/photo-1612323795550-e50ea0b9acab?w=800',
-    category: 'Home Decor',
-    isNew: true
-  },
-  {
-    id: '2',
-    name: 'Woven Bamboo Basket',
-    price: 34.99,
-    image: 'https://images.unsplash.com/photo-1603406448185-79cde1359c59?w=800',
-    category: 'Storage'
-  },
-  {
-    id: '3',
-    name: 'Handwoven Wool Rug',
-    price: 129.99,
-    image: 'https://images.unsplash.com/photo-1598300042761-bc13ee747fe8?w=800',
-    category: 'Textiles',
-    isNew: true
-  },
-  {
-    id: '4',
-    name: 'Artisanal Olive Oil',
-    price: 24.99,
-    image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=800',
-    category: 'Gourmet'
-  },
-  {
-    id: '5',
-    name: 'Moroccan Leather Pouf',
-    price: 89.99,
-    image: 'https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=800',
-    category: 'Furniture'
-  },
-  {
-    id: '6',
-    name: 'Hand-painted Ceramic Plates',
-    price: 65.99,
-    image: 'https://images.unsplash.com/photo-1603199506016-b9a594b593c0?w=800',
-    category: 'Tableware'
-  },
-  {
-    id: '7',
-    name: 'Traditional Spice Set',
-    price: 39.99,
-    image: 'https://images.unsplash.com/photo-1532336414038-cf19250c5757?w=800',
-    category: 'Gourmet'
-  },
-  {
-    id: '8',
-    name: 'Handcrafted Wooden Bowl',
-    price: 42.99,
-    image: 'https://images.unsplash.com/photo-1578467197456-3c6c6ad80af2?w=800',
-    category: 'Home Decor'
-  }
-];
-
-// Available categories
-const categories = [
-  'All Products',
-  'Home Decor',
-  'Textiles',
-  'Furniture',
-  'Tableware',
-  'Gourmet',
-  'Storage'
-];
+import { supabase } from '@/lib/supabase';
 
 const ProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,11 +14,78 @@ const ProductsPage = () => {
   const [priceRange, setPriceRange] = useState({ min: 0, max: 150 });
   const [showFilters, setShowFilters] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  // Available categories
+  const categories = [
+    'All Products',
+    'Home Decor',
+    'Textiles',
+    'Furniture',
+    'Tableware',
+    'Gourmet',
+    'Storage'
+  ];
+
+  // Fetch products from Supabase
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('products')
+          .select('*');
+        
+        if (error) {
+          throw error;
+        }
+
+        // Transform data to match our Product interface
+        const transformedProducts: Product[] = data.map(product => ({
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          price: parseFloat(product.price),
+          old_price: product.old_price ? parseFloat(product.old_price) : undefined,
+          image: product.image || 'https://images.unsplash.com/photo-1612323795550-e50ea0b9acab?w=800',
+          rating: product.rating ? parseFloat(product.rating) : undefined,
+          reviews: product.reviews,
+          is_new: product.is_new,
+          is_featured: product.is_featured,
+          category: product.category,
+          seller_id: product.seller_id,
+          created_at: product.created_at,
+          updated_at: product.updated_at
+        }));
+
+        setAllProducts(transformedProducts);
+      } catch (error: any) {
+        console.error('Error fetching products:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load products. Please try again later.',
+          variant: 'destructive',
+        });
+        // Set to empty array to avoid undefined errors
+        setAllProducts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [toast]);
 
   // Filter products based on search, category and price
   useEffect(() => {
-    const filtered = mockProducts.filter(product => {
+    if (allProducts.length === 0) {
+      setFilteredProducts([]);
+      return;
+    }
+
+    const filtered = allProducts.filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'All Products' || product.category === selectedCategory;
       const matchesPrice = product.price >= priceRange.min && product.price <= priceRange.max;
@@ -99,7 +94,7 @@ const ProductsPage = () => {
     });
     
     setFilteredProducts(filtered);
-  }, [searchTerm, selectedCategory, priceRange]);
+  }, [searchTerm, selectedCategory, priceRange, allProducts]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -230,13 +225,17 @@ const ProductsPage = () => {
         {filteredProducts.length > 0 ? (
           <ProductGrid 
             products={filteredProducts} 
-            isLoading={false} 
+            isLoading={isLoading} 
             itemsPerPage={8}
           />
         ) : (
           <div className="text-center py-12">
-            <h3 className="text-xl font-medium text-souk-800 mb-2">No products found</h3>
-            <p className="text-souk-600">Try adjusting your search or filter criteria</p>
+            <h3 className="text-xl font-medium text-souk-800 mb-2">
+              {isLoading ? 'Loading products...' : 'No products found'}
+            </h3>
+            {!isLoading && (
+              <p className="text-souk-600">Try adjusting your search or filter criteria</p>
+            )}
           </div>
         )}
       </main>
