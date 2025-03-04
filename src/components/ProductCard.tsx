@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useCallback, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -31,7 +32,7 @@ const ProductCard = ({
   const navigate = useNavigate();
   const isLiked = isInWishlist(id);
 
-  const handleAction = (action: 'cart' | 'wishlist') => {
+  const handleAction = useCallback((action: 'cart' | 'wishlist') => {
     if (!user) {
       localStorage.setItem('returnTo', `/product/${id}`);
       navigate('/login');
@@ -47,13 +48,19 @@ const ProductCard = ({
         addToWishlist({ id, name, price, image, category });
       }
     }
-  };
+  }, [user, id, name, price, image, category, addItem, addToWishlist, removeFromWishlist, isLiked, navigate]);
+
+  const handleMouseEnter = useCallback(() => setIsHovered(true), []);
+  const handleMouseLeave = useCallback(() => setIsHovered(false), []);
+
+  const handleAddToCart = useCallback(() => handleAction('cart'), [handleAction]);
+  const handleToggleWishlist = useCallback(() => handleAction('wishlist'), [handleAction]);
 
   return (
     <div 
       className="group card-hover rounded-lg bg-white overflow-hidden"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div className="relative image-zoom aspect-square overflow-hidden">
         <div 
@@ -70,6 +77,7 @@ const ProductCard = ({
             "w-full h-full object-cover transition-all duration-300",
             imageLoaded ? "opacity-100" : "opacity-0"
           )}
+          loading="lazy"
           onLoad={() => setImageLoaded(true)}
         />
         
@@ -81,20 +89,23 @@ const ProductCard = ({
         )}
         
         <button 
-          onClick={() => handleAction('wishlist')}
+          onClick={handleToggleWishlist}
           className={cn(
             "absolute top-3 right-3 bg-white/90 p-2 rounded-full transition-all duration-300",
             isLiked ? "text-red-500" : "text-souk-700",
             "hover:bg-souk-700 hover:text-white",
-            isHovered ? "opacity-100" : "opacity-0"
+            isHovered ? "opacity-100 transform scale-100" : "opacity-0 transform scale-90"
           )}
-          aria-label="Add to wishlist"
+          aria-label={isLiked ? "Retirer des favoris" : "Ajouter aux favoris"}
         >
-          <Heart size={18} className={isLiked ? "fill-current" : ""} />
+          <Heart size={18} className={cn(
+            "transition-all duration-300",
+            isLiked ? "fill-current" : ""
+          )} />
         </button>
         
         <button 
-          onClick={() => handleAction('cart')}
+          onClick={handleAddToCart}
           className={cn(
             "absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm",
             "p-3 flex justify-center transform transition-transform duration-300",
@@ -119,39 +130,7 @@ const ProductCard = ({
   );
 };
 
-const WishlistButton = ({ isVisible }: { isVisible: boolean }) => (
-  <button 
-    className={cn(
-      "absolute top-3 right-3 bg-white/90 p-2 rounded-full text-souk-700",
-      "hover:bg-souk-700 hover:text-white transition-all duration-300",
-      isVisible ? "opacity-100" : "opacity-0"
-    )}
-    aria-label="Add to wishlist"
-  >
-    <Heart size={18} />
-  </button>
-);
-
-const AddToCartButton = ({ isVisible }: { isVisible: boolean }) => (
-  <div 
-    className={cn(
-      "absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm",
-      "p-3 flex justify-center transform transition-transform duration-300",
-      isVisible ? "translate-y-0" : "translate-y-full"
-    )}
-  >
-    <button 
-      className="bg-souk-700 hover:bg-souk-800 text-white py-2 px-4 
-                rounded-md text-sm font-medium flex items-center button-hover"
-      aria-label="Add to cart"
-    >
-      <ShoppingCart size={16} className="mr-2" />
-      Add to Cart
-    </button>
-  </div>
-);
-
-const ProductCardInfo = ({ 
+const ProductCardInfo = memo(({ 
   id, 
   name, 
   price, 
@@ -168,6 +147,8 @@ const ProductCardInfo = ({
     
     <p className="font-semibold text-souk-700">${price.toFixed(2)}</p>
   </div>
-);
+));
 
-export default ProductCard;
+ProductCardInfo.displayName = 'ProductCardInfo';
+
+export default memo(ProductCard);

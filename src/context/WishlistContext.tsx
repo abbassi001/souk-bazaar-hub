@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 interface WishlistItem {
@@ -34,7 +34,7 @@ export const WishlistProvider = ({ children }: { children: React.ReactNode }) =>
     localStorage.setItem('wishlist', JSON.stringify(items));
   }, [items]);
 
-  const addItem = (item: WishlistItem) => {
+  const addItem = useCallback((item: WishlistItem) => {
     setItems(currentItems => {
       const exists = currentItems.some(i => i.id === item.id);
       if (!exists) {
@@ -47,20 +47,28 @@ export const WishlistProvider = ({ children }: { children: React.ReactNode }) =>
       }
       return currentItems;
     });
-  };
+  }, [toast]);
 
-  const removeItem = (id: string) => {
-    setItems(currentItems => currentItems.filter(item => item.id !== id));
-    toast({
-      title: "Retiré des favoris",
-      description: "L'article a été retiré de vos favoris",
-      duration: 3000,
+  const removeItem = useCallback((id: string) => {
+    setItems(currentItems => {
+      const itemToRemove = currentItems.find(item => item.id === id);
+      const newItems = currentItems.filter(item => item.id !== id);
+      
+      if (itemToRemove) {
+        toast({
+          title: "Retiré des favoris",
+          description: `${itemToRemove.name} a été retiré de vos favoris`,
+          duration: 3000,
+        });
+      }
+      
+      return newItems;
     });
-  };
+  }, [toast]);
 
-  const isInWishlist = (id: string) => {
+  const isInWishlist = useCallback((id: string) => {
     return items.some(item => item.id === id);
-  };
+  }, [items]);
 
   return (
     <WishlistContext.Provider value={{

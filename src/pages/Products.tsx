@@ -1,10 +1,11 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Filter, Search } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import ProductCard from '../components/ProductCard';
+import ProductGrid from '../components/category/ProductGrid';
+import { Product } from '@/types/product';
 
 // Mock products data - to be replaced with API calls
 const mockProducts = [
@@ -84,16 +85,21 @@ const ProductsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('All Products');
   const [priceRange, setPriceRange] = useState({ min: 0, max: 150 });
   const [showFilters, setShowFilters] = useState(false);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const { toast } = useToast();
 
   // Filter products based on search, category and price
-  const filteredProducts = mockProducts.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All Products' || product.category === selectedCategory;
-    const matchesPrice = product.price >= priceRange.min && product.price <= priceRange.max;
+  useEffect(() => {
+    const filtered = mockProducts.filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === 'All Products' || product.category === selectedCategory;
+      const matchesPrice = product.price >= priceRange.min && product.price <= priceRange.max;
+      
+      return matchesSearch && matchesCategory && matchesPrice;
+    });
     
-    return matchesSearch && matchesCategory && matchesPrice;
-  });
+    setFilteredProducts(filtered);
+  }, [searchTerm, selectedCategory, priceRange]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -220,13 +226,13 @@ const ProductsPage = () => {
           </p>
         </div>
         
-        {/* Products grid */}
+        {/* Products grid with pagination */}
         {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredProducts.map(product => (
-              <ProductCard key={product.id} {...product} />
-            ))}
-          </div>
+          <ProductGrid 
+            products={filteredProducts} 
+            isLoading={false} 
+            itemsPerPage={8}
+          />
         ) : (
           <div className="text-center py-12">
             <h3 className="text-xl font-medium text-souk-800 mb-2">No products found</h3>

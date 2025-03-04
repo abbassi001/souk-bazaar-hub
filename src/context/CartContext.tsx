@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 interface CartItem {
@@ -39,7 +39,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('cart', JSON.stringify(items));
   }, [items]);
 
-  const addItem = (newItem: Omit<CartItem, 'quantity'>) => {
+  // Optimized version with useCallback
+  const addItem = useCallback((newItem: Omit<CartItem, 'quantity'>) => {
     setItems(currentItems => {
       const existingItem = currentItems.find(item => item.id === newItem.id);
       
@@ -59,13 +60,26 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       description: `${newItem.name} a été ajouté à votre panier`,
       duration: 3000,
     });
-  };
+  }, [toast]);
 
-  const removeItem = (id: string) => {
-    setItems(currentItems => currentItems.filter(item => item.id !== id));
-  };
+  const removeItem = useCallback((id: string) => {
+    setItems(currentItems => {
+      const itemToRemove = currentItems.find(item => item.id === id);
+      const newItems = currentItems.filter(item => item.id !== id);
+      
+      if (itemToRemove) {
+        toast({
+          title: "Article retiré",
+          description: `${itemToRemove.name} a été retiré de votre panier`,
+          duration: 3000,
+        });
+      }
+      
+      return newItems;
+    });
+  }, [toast]);
 
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = useCallback((id: string, quantity: number) => {
     if (quantity < 1) return;
     
     setItems(currentItems =>
@@ -73,11 +87,16 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         item.id === id ? { ...item, quantity } : item
       )
     );
-  };
+  }, []);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setItems([]);
-  };
+    toast({
+      title: "Panier vidé",
+      description: "Tous les articles ont été retirés de votre panier",
+      duration: 3000,
+    });
+  }, [toast]);
 
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
 
