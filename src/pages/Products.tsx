@@ -8,7 +8,7 @@ import ProductGrid from '../components/category/ProductGrid';
 import { Product } from '@/types/product';
 
 // Mock products data - to be replaced with API calls
-const mockProducts = [
+const mockProducts: Product[] = [
   {
     id: '1',
     name: 'Handmade Ceramic Vase',

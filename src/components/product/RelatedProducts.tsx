@@ -1,16 +1,9 @@
 
 import ProductCard from '../ProductCard';
-
-interface RelatedProduct {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  category: string;
-}
+import { Product } from '@/types/product';
 
 interface RelatedProductsProps {
-  products: RelatedProduct[];
+  products: Product[];
 }
 
 const RelatedProducts = ({ products }: RelatedProductsProps) => {

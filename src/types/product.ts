@@ -5,12 +5,12 @@ export interface Product {
   price: number;
   oldPrice?: number;
   image: string;
-  rating: number;
-  reviews: number;
+  rating?: number; // Maintenant optionnel
+  reviews?: number; // Maintenant optionnel
   isNew?: boolean;
   isFeatured?: boolean;
   category: string;
-  seller: {
+  seller?: { // Maintenant optionnel
     name: string;
     location: string;
     isVerified: boolean;
