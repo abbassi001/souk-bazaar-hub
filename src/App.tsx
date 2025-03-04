@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,13 +19,9 @@ import Categories from "./pages/Categories";
 import CategoryDetail from "./pages/CategoryDetail";
 import About from "./pages/About";
 import ProtectedRoute from "./components/ProtectedRoute";
-
-// Create a dashboard page placeholder
-const Dashboard = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <h1 className="text-2xl font-bold">Seller Dashboard - Coming Soon</h1>
-  </div>
-);
+import SellerDashboard from "./pages/seller/Dashboard";
+import AddProduct from "./pages/seller/AddProduct";
+import EditProduct from "./pages/seller/EditProduct";
 
 const queryClient = new QueryClient();
 
@@ -59,10 +56,26 @@ const App = () => (
                   } 
                 />
                 <Route 
-                  path="/dashboard" 
+                  path="/seller/dashboard" 
                   element={
                     <ProtectedRoute requiredRole="seller">
-                      <Dashboard />
+                      <SellerDashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/seller/add-product" 
+                  element={
+                    <ProtectedRoute requiredRole="seller">
+                      <AddProduct />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/seller/edit-product/:id" 
+                  element={
+                    <ProtectedRoute requiredRole="seller">
+                      <EditProduct />
                     </ProtectedRoute>
                   } 
                 />
@@ -80,6 +93,7 @@ const App = () => (
                 <Route path="/categorie" element={<Navigate to="/categories" replace />} />
                 <Route path="/categorie/:id" element={<Navigate to="/category/:id" replace />} />
                 <Route path="/about-us" element={<Navigate to="/about" replace />} />
+                <Route path="/dashboard" element={<Navigate to="/seller/dashboard" replace />} />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
