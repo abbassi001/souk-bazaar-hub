@@ -1,8 +1,10 @@
-
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 
 interface ProductCardProps {
   id: string;
@@ -23,6 +25,29 @@ const ProductCard = ({
 }: ProductCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const { user } = useAuth();
+  const { addItem } = useCart();
+  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
+  const navigate = useNavigate();
+  const isLiked = isInWishlist(id);
+
+  const handleAction = (action: 'cart' | 'wishlist') => {
+    if (!user) {
+      localStorage.setItem('returnTo', `/product/${id}`);
+      navigate('/login');
+      return;
+    }
+
+    if (action === 'cart') {
+      addItem({ id, name, price, image, category });
+    } else {
+      if (isLiked) {
+        removeFromWishlist(id);
+      } else {
+        addToWishlist({ id, name, price, image, category });
+      }
+    }
+  };
 
   return (
     <div 
@@ -31,7 +56,6 @@ const ProductCard = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative image-zoom aspect-square overflow-hidden">
-        {/* Blur placeholder */}
         <div 
           className={cn(
             "absolute inset-0 bg-souk-100 animate-pulse transition-opacity duration-500",
@@ -56,9 +80,33 @@ const ProductCard = ({
           </span>
         )}
         
-        <WishlistButton isVisible={isHovered} />
+        <button 
+          onClick={() => handleAction('wishlist')}
+          className={cn(
+            "absolute top-3 right-3 bg-white/90 p-2 rounded-full transition-all duration-300",
+            isLiked ? "text-red-500" : "text-souk-700",
+            "hover:bg-souk-700 hover:text-white",
+            isHovered ? "opacity-100" : "opacity-0"
+          )}
+          aria-label="Add to wishlist"
+        >
+          <Heart size={18} className={isLiked ? "fill-current" : ""} />
+        </button>
         
-        <AddToCartButton isVisible={isHovered} />
+        <button 
+          onClick={() => handleAction('cart')}
+          className={cn(
+            "absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm",
+            "p-3 flex justify-center transform transition-transform duration-300",
+            isHovered ? "translate-y-0" : "translate-y-full"
+          )}
+        >
+          <span className="bg-souk-700 hover:bg-souk-800 text-white py-2 px-4 
+                         rounded-md text-sm font-medium flex items-center button-hover">
+            <ShoppingCart size={16} className="mr-2" />
+            Ajouter au panier
+          </span>
+        </button>
       </div>
       
       <ProductCardInfo 
