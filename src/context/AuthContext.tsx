@@ -34,15 +34,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        fetchUserProfile(session.user.id);
-      } else {
+    const initializeAuth = async () => {
+      try {
+        setIsLoading(true);
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        
+        if (session) {
+          await fetchUserProfile(session.user.id);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
         setUser(null);
+      } finally {
         setIsLoading(false);
       }
-    });
+    };
+
+    initializeAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -64,7 +75,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching user profile:', error);
@@ -148,7 +159,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         duration: 5000
       });
       
-      // Switch to login view
       return;
       
     } catch (error: any) {
@@ -232,6 +242,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
+      setIsLoading(true);
       await supabase.auth.signOut();
       
       toast({
@@ -240,6 +251,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         duration: 3000
       });
       
+      setUser(null);
       navigate('/login');
     } catch (error: any) {
       toast({
@@ -248,6 +260,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         variant: "destructive",
         duration: 5000
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 

@@ -15,6 +15,7 @@ const Login = () => {
   const [name, setName] = useState('');
   const [role, setRole] = useState<'buyer' | 'seller'>('buyer');
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { signIn, signUp, user, isLoading } = useAuth();
   const { toast } = useToast();
@@ -29,7 +30,11 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (isSubmitting) return; // Prevent multiple submissions
+    
     try {
+      setIsSubmitting(true);
+      
       if (isLogin) {
         await signIn(email, password);
       } else {
@@ -40,6 +45,7 @@ const Login = () => {
             variant: "destructive",
             duration: 3000
           });
+          setIsSubmitting(false);
           return;
         }
         
@@ -49,6 +55,8 @@ const Login = () => {
       }
     } catch (error) {
       console.error("Auth error:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -70,6 +78,7 @@ const Login = () => {
                   isLogin ? 'text-souk-700 border-b-2 border-souk-700' : 'text-souk-500'
                 }`}
                 onClick={() => setIsLogin(true)}
+                disabled={isSubmitting}
               >
                 Connexion
               </button>
@@ -79,6 +88,7 @@ const Login = () => {
                   !isLogin ? 'text-souk-700 border-b-2 border-souk-700' : 'text-souk-500'
                 }`}
                 onClick={() => setIsLogin(false)}
+                disabled={isSubmitting}
               >
                 Inscription
               </button>
@@ -103,6 +113,7 @@ const Login = () => {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         required={!isLogin}
+                        disabled={isSubmitting}
                       />
                     </div>
                   </div>
@@ -120,6 +131,7 @@ const Login = () => {
                             : 'border-souk-300 text-souk-700'
                         }`}
                         onClick={() => setRole('buyer')}
+                        disabled={isSubmitting}
                       >
                         <User size={18} className="mr-2" />
                         Acheteur
@@ -132,6 +144,7 @@ const Login = () => {
                             : 'border-souk-300 text-souk-700'
                         }`}
                         onClick={() => setRole('seller')}
+                        disabled={isSubmitting}
                       >
                         <UserCircle size={18} className="mr-2" />
                         Vendeur
@@ -157,6 +170,7 @@ const Login = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
               </div>
@@ -185,6 +199,7 @@ const Login = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
+                    disabled={isSubmitting}
                   />
                 </div>
                 {!isLogin && (
@@ -196,10 +211,10 @@ const Login = () => {
               
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isSubmitting || isLoading}
                 className="w-full bg-souk-700 hover:bg-souk-800 text-white py-3 px-4 rounded-md font-medium flex items-center justify-center button-hover disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isLoading ? (
+                {isSubmitting || isLoading ? (
                   <span className="flex items-center">
                     <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
                     Traitement...
@@ -221,6 +236,7 @@ const Login = () => {
                     type="button"
                     className="text-souk-700 font-medium hover:text-souk-900 hover-underline"
                     onClick={() => setIsLogin(false)}
+                    disabled={isSubmitting}
                   >
                     Créer un compte
                   </button>
@@ -232,6 +248,7 @@ const Login = () => {
                     type="button"
                     className="text-souk-700 font-medium hover:text-souk-900 hover-underline"
                     onClick={() => setIsLogin(true)}
+                    disabled={isSubmitting}
                   >
                     Se connecter
                   </button>
