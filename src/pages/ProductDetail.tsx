@@ -82,6 +82,20 @@ const ProductDetail = () => {
     setProduct(productData);
   }, [id]);
 
+  // Create productInfo with the correct structure for ProductInfo component
+  const productInfo = {
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    discountPrice: product.old_price || product.price,
+    description: product.description,
+    category: product.category,
+    rating: product.rating,
+    reviewCount: product.reviewCount,
+    stock: product.stock,
+    artisan: product.artisan
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -110,7 +124,7 @@ const ProductDetail = () => {
           <ProductImages images={product.images} name={product.name} />
           
           {/* Product details */}
-          <ProductInfo product={product} />
+          <ProductInfo product={productInfo} />
         </div>
         
         {/* Collapsible sections */}

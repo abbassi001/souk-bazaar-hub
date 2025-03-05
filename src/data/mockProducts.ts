@@ -166,3 +166,15 @@ export const products: Product[] = [
     seller_id: "3"
   }
 ];
+
+// Add the missing mockProductsByCategory export
+export const mockProductsByCategory: Record<string, Product[]> = {
+  'textiles': products.filter(p => p.category === 'textiles'),
+  'home-decor': products.filter(p => p.category === 'home-decor'),
+  'jewelry': products.filter(p => p.category === 'jewelry'),
+  'ceramics': products.filter(p => p.category === 'ceramics'),
+  'spices': products.filter(p => p.category === 'spices'),
+  'leather': products.filter(p => p.category === 'leather'),
+  'furniture': products.filter(p => p.category === 'furniture'),
+  'lighting': products.filter(p => p.category === 'lighting')
+};
