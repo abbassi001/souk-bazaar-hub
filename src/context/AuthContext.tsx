@@ -76,6 +76,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           role: data.role as UserRole,
           name: data.name
         });
+      } else {
+        // If profile doesn't exist yet but user exists in auth
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData.user) {
+          // Use metadata from auth user
+          const metadata = userData.user.user_metadata;
+          const email = userData.user.email || '';
+          
+          try {
+            // Insert the profile
+            await supabase.from('profiles').insert({
+              id: userId,
+              email: email,
+              role: (metadata?.role as UserRole) || 'buyer',
+              name: metadata?.name || 'User'
+            });
+            
+            // Set user with metadata
+            setUser({
+              id: userId,
+              email: email,
+              role: (metadata?.role as UserRole) || 'buyer',
+              name: metadata?.name || 'User'
+            });
+          } catch (insertError) {
+            console.error('Error creating profile:', insertError);
+            setUser(null);
+          }
+        }
       }
     } catch (error) {
       console.error('Unexpected error fetching profile:', error);
@@ -88,6 +117,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signUp = async (email: string, password: string, name: string, role: UserRole) => {
     try {
       setIsLoading(true);
+      
+      // Validate email before attempting signup
+      if (!email || !email.includes('@') || !email.includes('.')) {
+        throw new Error("Veuillez saisir une adresse email valide");
+      }
+      
+      // Check password strength
+      if (password.length < 6) {
+        throw new Error("Le mot de passe doit contenir au moins 6 caractères");
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -95,7 +135,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           data: {
             name,
             role
-          }
+          },
+          emailRedirectTo: window.location.origin + '/login'
         }
       });
 
@@ -106,10 +147,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: "Votre compte a été créé avec succès. Veuillez vérifier votre email pour confirmer votre inscription.",
         duration: 5000
       });
+      
+      // Switch to login view
+      return;
+      
     } catch (error: any) {
+      console.error("Signup error:", error);
+      
+      // Handle specific error messages
+      let errorMessage = "Une erreur est survenue lors de l'inscription.";
+      
+      if (error.message.includes("User already registered")) {
+        errorMessage = "Cet email est déjà utilisé. Veuillez vous connecter ou utiliser un autre email.";
+      } else if (error.message.includes("invalid")) {
+        errorMessage = "Email invalide. Veuillez vérifier votre adresse email.";
+      }
+      
       toast({
         title: "Erreur d'inscription",
-        description: error.message || "Une erreur est survenue lors de l'inscription.",
+        description: errorMessage,
         variant: "destructive",
         duration: 5000
       });
@@ -121,12 +177,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      
+      if (!email || !password) {
+        throw new Error("Veuillez remplir tous les champs");
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific error types
+        if (error.message.includes("Email not confirmed")) {
+          toast({
+            title: "Email non confirmé",
+            description: "Veuillez vérifier votre email et cliquer sur le lien de confirmation.",
+            variant: "destructive",
+            duration: 5000
+          });
+          return;
+        }
+        throw error;
+      }
 
       toast({
         title: "Connexion réussie!",
@@ -139,9 +212,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await fetchUserProfile(data.user.id);
       }
     } catch (error: any) {
+      console.error("Login error:", error);
+      
+      let errorMessage = "Email ou mot de passe incorrect.";
+      if (error.message.includes("Invalid login credentials")) {
+        errorMessage = "Email ou mot de passe incorrect.";
+      }
+      
       toast({
         title: "Erreur de connexion",
-        description: error.message || "Email ou mot de passe incorrect.",
+        description: errorMessage,
         variant: "destructive",
         duration: 5000
       });

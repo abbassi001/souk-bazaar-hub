@@ -1,10 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, ArrowRight, UserCircle } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, UserCircle, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -12,8 +14,10 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState<'buyer' | 'seller'>('buyer');
+  const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const navigate = useNavigate();
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, isLoading } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     // If user is already logged in, redirect based on role
@@ -25,11 +29,26 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isLogin) {
-      await signIn(email, password);
-    } else {
-      await signUp(email, password, name, role);
-      setIsLogin(true);
+    try {
+      if (isLogin) {
+        await signIn(email, password);
+      } else {
+        if (!name.trim()) {
+          toast({
+            title: "Nom requis",
+            description: "Veuillez saisir votre nom complet",
+            variant: "destructive",
+            duration: 3000
+          });
+          return;
+        }
+        
+        await signUp(email, password, name, role);
+        // Show info dialog about email verification after successful signup
+        setIsInfoDialogOpen(true);
+      }
+    } catch (error) {
+      console.error("Auth error:", error);
     }
   };
 
@@ -46,6 +65,7 @@ const Login = () => {
             
             <div className="flex border-b border-souk-200 mb-6">
               <button
+                type="button"
                 className={`flex-1 py-3 font-medium text-center transition-colors ${
                   isLogin ? 'text-souk-700 border-b-2 border-souk-700' : 'text-souk-500'
                 }`}
@@ -54,6 +74,7 @@ const Login = () => {
                 Connexion
               </button>
               <button
+                type="button"
                 className={`flex-1 py-3 font-medium text-center transition-colors ${
                   !isLogin ? 'text-souk-700 border-b-2 border-souk-700' : 'text-souk-500'
                 }`}
@@ -163,16 +184,32 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    minLength={6}
                   />
                 </div>
+                {!isLogin && (
+                  <p className="text-xs text-souk-500">
+                    Le mot de passe doit contenir au moins 6 caractères
+                  </p>
+                )}
               </div>
               
               <button
                 type="submit"
-                className="w-full bg-souk-700 hover:bg-souk-800 text-white py-3 px-4 rounded-md font-medium flex items-center justify-center button-hover"
+                disabled={isLoading}
+                className="w-full bg-souk-700 hover:bg-souk-800 text-white py-3 px-4 rounded-md font-medium flex items-center justify-center button-hover disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isLogin ? 'Se connecter' : 'Créer un compte'}
-                <ArrowRight size={18} className="ml-2" />
+                {isLoading ? (
+                  <span className="flex items-center">
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                    Traitement...
+                  </span>
+                ) : (
+                  <>
+                    {isLogin ? 'Se connecter' : 'Créer un compte'}
+                    <ArrowRight size={18} className="ml-2" />
+                  </>
+                )}
               </button>
             </form>
             
@@ -181,6 +218,7 @@ const Login = () => {
                 <p>
                   Nouveau sur Souk Market?{' '}
                   <button 
+                    type="button"
                     className="text-souk-700 font-medium hover:text-souk-900 hover-underline"
                     onClick={() => setIsLogin(false)}
                   >
@@ -191,6 +229,7 @@ const Login = () => {
                 <p>
                   Déjà un compte?{' '}
                   <button 
+                    type="button"
                     className="text-souk-700 font-medium hover:text-souk-900 hover-underline"
                     onClick={() => setIsLogin(true)}
                   >
@@ -202,6 +241,37 @@ const Login = () => {
           </div>
         </div>
       </div>
+      
+      <Dialog open={isInfoDialogOpen} onOpenChange={setIsInfoDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              Confirmation par email requise
+            </DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            <p className="mb-4">
+              Un email de confirmation a été envoyé à votre adresse email. Veuillez vérifier votre boîte de réception et cliquer sur le lien pour activer votre compte.
+            </p>
+            <p className="mb-4">
+              Si vous ne trouvez pas l'email, vérifiez votre dossier spam ou courrier indésirable.
+            </p>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsInfoDialogOpen(false);
+                  setIsLogin(true);
+                }}
+                className="bg-souk-700 hover:bg-souk-800 text-white py-2 px-4 rounded-md"
+              >
+                Compris
+              </button>
+            </div>
+          </DialogDescription>
+        </DialogContent>
+      </Dialog>
       
       <Footer />
     </div>
