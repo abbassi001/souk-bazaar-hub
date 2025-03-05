@@ -11,76 +11,124 @@ import ProductDetails from '../components/product/ProductDetails';
 import RelatedProducts from '../components/product/RelatedProducts';
 import { Product } from '@/types/product';
 import { supabase } from '@/lib/supabase';
-
-// Dummy product data - to be replaced with API calls
-const productData = {
-  id: '1',
-  name: 'Tapis Berbère Traditionnel',
-  price: 1299,
-  old_price: 999,
-  description: 'Tapis berbère artisanal tissé à la main par des artisans marocains. Ces tapis sont fabriqués selon des techniques traditionnelles transmises de génération en génération. Chaque motif raconte une histoire unique et symbolique de la culture berbère.',
-  features: [
-    'Matériaux: 100% laine naturelle',
-    'Dimensions: 200 x 150 cm',
-    'Tissage manuel traditionnel',
-    'Motifs berbères authentiques',
-    'Chaque pièce est unique'
-  ],
-  rating: 4.7,
-  reviewCount: 128,
-  images: [
-    'https://images.unsplash.com/photo-1531835551805-16d864c8d311?q=80&w=2787&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1505409628601-edc9af17fda6?q=80&w=2000&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1574223706388-0e0f6f0390f1?q=80&w=1964&auto=format&fit=crop'
-  ],
-  category: 'Artisanat',
-  stock: 12,
-  artisan: {
-    name: 'Fatima Zahra',
-    location: 'Marrakech, Maroc',
-    since: 2005,
-    image: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?q=80&w=2071&auto=format&fit=crop'
-  }
-};
-
-// Dummy related products converted to match Product interface
-const relatedProducts: Product[] = [
-  {
-    id: '2',
-    name: 'Coussin Kilim',
-    price: 299,
-    image: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=1974&auto=format&fit=crop',
-    category: 'textiles',
-    seller_id: '1'
-  },
-  {
-    id: '3',
-    name: 'Panier Tressé',
-    price: 199,
-    image: 'https://images.unsplash.com/photo-1609510368600-883b7f16d121?q=80&w=1965&auto=format&fit=crop',
-    category: 'home-decor',
-    seller_id: '1'
-  },
-  {
-    id: '4',
-    name: 'Lanterne Marocaine',
-    price: 349,
-    image: 'https://images.unsplash.com/photo-1517821099606-cef63a9e210e?q=80&w=1974&auto=format&fit=crop',
-    category: 'lighting',
-    seller_id: '1'
-  }
-];
+import { useToast } from '@/hooks/use-toast';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [product, setProduct] = useState(productData);
+  const [product, setProduct] = useState<any>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  // Simulate fetching product by ID - to be replaced with real API call
+  // Fetch product data from Supabase
   useEffect(() => {
-    console.log(`Fetching product with ID: ${id}`);
-    // For now, just use the dummy data
-    setProduct(productData);
-  }, [id]);
+    const fetchProduct = async () => {
+      if (!id) return;
+      
+      try {
+        setIsLoading(true);
+        
+        // Fetch the product from Supabase
+        const { data: productData, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (!productData) {
+          toast({
+            title: "Produit non trouvé",
+            description: "Le produit que vous recherchez n'existe pas ou a été supprimé.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Add dummy artisan data for now - this should eventually come from a real table
+        const productWithArtisan = {
+          ...productData,
+          images: productData.image ? [productData.image] : [],
+          reviewCount: productData.reviews || 0,
+          features: [
+            'Matériaux: 100% laine naturelle',
+            'Dimensions: 200 x 150 cm',
+            'Tissage manuel traditionnel',
+            'Motifs berbères authentiques',
+            'Chaque pièce est unique'
+          ],
+          stock: 12,
+          artisan: {
+            name: 'Fatima Zahra',
+            location: 'Marrakech, Maroc',
+            since: 2005,
+            image: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?q=80&w=2071&auto=format&fit=crop'
+          }
+        };
+        
+        setProduct(productWithArtisan);
+        
+        // Fetch related products (same category)
+        const { data: relatedData, error: relatedError } = await supabase
+          .from('products')
+          .select('*')
+          .eq('category', productData.category)
+          .neq('id', id)
+          .limit(4);
+        
+        if (relatedError) {
+          console.error('Error fetching related products:', relatedError);
+        } else {
+          setRelatedProducts(relatedData as Product[]);
+        }
+        
+      } catch (error: any) {
+        console.error('Error fetching product:', error);
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors du chargement du produit.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProduct();
+  }, [id, toast]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow container mx-auto px-4 py-8 flex items-center justify-center">
+          <div className="w-16 h-16 border-t-4 border-souk-700 border-solid rounded-full animate-spin"></div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // 404 state
+  if (!product) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow container mx-auto px-4 py-8 flex flex-col items-center justify-center">
+          <h1 className="text-3xl font-bold text-souk-900 mb-4">Produit non trouvé</h1>
+          <p className="text-souk-600 mb-6">Le produit que vous recherchez n'existe pas ou a été supprimé.</p>
+          <Link to="/products" className="bg-souk-700 hover:bg-souk-800 text-white px-6 py-2 rounded-md">
+            Retour aux produits
+          </Link>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   // Create productInfo with the correct structure for ProductInfo component
   const productInfo = {
