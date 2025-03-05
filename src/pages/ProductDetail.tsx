@@ -9,13 +9,15 @@ import ProductImages from '../components/product/ProductImages';
 import ProductInfo from '../components/product/ProductInfo';
 import ProductDetails from '../components/product/ProductDetails';
 import RelatedProducts from '../components/product/RelatedProducts';
+import { Product } from '@/types/product';
+import { supabase } from '@/lib/supabase';
 
 // Dummy product data - to be replaced with API calls
 const productData = {
   id: '1',
   name: 'Tapis Berbère Traditionnel',
   price: 1299,
-  discountPrice: 999,
+  old_price: 999,
   description: 'Tapis berbère artisanal tissé à la main par des artisans marocains. Ces tapis sont fabriqués selon des techniques traditionnelles transmises de génération en génération. Chaque motif raconte une histoire unique et symbolique de la culture berbère.',
   features: [
     'Matériaux: 100% laine naturelle',
@@ -41,28 +43,31 @@ const productData = {
   }
 };
 
-// Dummy related products - to be replaced with API calls
-const relatedProducts = [
+// Dummy related products converted to match Product interface
+const relatedProducts: Product[] = [
   {
     id: '2',
     name: 'Coussin Kilim',
     price: 299,
     image: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=1974&auto=format&fit=crop',
-    category: 'Textile'
+    category: 'textiles',
+    seller_id: '1'
   },
   {
     id: '3',
     name: 'Panier Tressé',
     price: 199,
     image: 'https://images.unsplash.com/photo-1609510368600-883b7f16d121?q=80&w=1965&auto=format&fit=crop',
-    category: 'Vannerie'
+    category: 'home-decor',
+    seller_id: '1'
   },
   {
     id: '4',
     name: 'Lanterne Marocaine',
     price: 349,
     image: 'https://images.unsplash.com/photo-1517821099606-cef63a9e210e?q=80&w=1974&auto=format&fit=crop',
-    category: 'Luminaire'
+    category: 'lighting',
+    seller_id: '1'
   }
 ];
 
