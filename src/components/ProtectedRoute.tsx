@@ -12,36 +12,37 @@ const ProtectedRoute = ({ children, requiredRole = null }: ProtectedRouteProps) 
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(true); // Changed to always authorize during development
   
-  useEffect(() => {
-    if (!isLoading) {
-      if (!user) {
-        // User is not logged in, redirect to login
-        toast({
-          title: "Accès restreint",
-          description: "Vous devez être connecté pour accéder à cette page.",
-          variant: "destructive",
-        });
-        
-        // Keep the original path in state so we can redirect back after login
-        navigate('/login', { state: { from: location.pathname } });
-      } else if (requiredRole && user.role !== requiredRole) {
-        // User doesn't have the required role
-        toast({
-          title: "Accès non autorisé",
-          description: `Cette page est réservée aux ${requiredRole === 'seller' ? 'vendeurs' : 'acheteurs'}.`,
-          variant: "destructive",
-        });
-        
-        // Redirect based on role
-        navigate(user.role === 'seller' ? '/dashboard' : '/products');
-      } else {
-        // User is authorized
-        setIsAuthorized(true);
-      }
-    }
-  }, [isLoading, user, navigate, requiredRole, location.pathname]);
+  // Commented out protection logic for development purposes
+  // useEffect(() => {
+  //   if (!isLoading) {
+  //     if (!user) {
+  //       // User is not logged in, redirect to login
+  //       toast({
+  //         title: "Accès restreint",
+  //         description: "Vous devez être connecté pour accéder à cette page.",
+  //         variant: "destructive",
+  //       });
+  //       
+  //       // Keep the original path in state so we can redirect back after login
+  //       navigate('/login', { state: { from: location.pathname } });
+  //     } else if (requiredRole && user.role !== requiredRole) {
+  //       // User doesn't have the required role
+  //       toast({
+  //         title: "Accès non autorisé",
+  //         description: `Cette page est réservée aux ${requiredRole === 'seller' ? 'vendeurs' : 'acheteurs'}.`,
+  //         variant: "destructive",
+  //       });
+  //       
+  //       // Redirect based on role
+  //       navigate(user.role === 'seller' ? '/dashboard' : '/products');
+  //     } else {
+  //       // User is authorized
+  //       setIsAuthorized(true);
+  //     }
+  //   }
+  // }, [isLoading, user, navigate, requiredRole, location.pathname]);
   
   if (isLoading) {
     return (

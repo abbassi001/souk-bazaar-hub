@@ -55,13 +55,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Redirect user based on role when user data is loaded
-  useEffect(() => {
-    if (user && !isLoading) {
-      // After login and profile fetch, redirect based on role
-      navigate(user.role === 'seller' ? '/dashboard' : '/products');
-    }
-  }, [user, isLoading, navigate]);
+  // Comment out the automatic redirection to allow dashboard development
+  // useEffect(() => {
+  //   if (user && !isLoading) {
+  //     // After login and profile fetch, redirect based on role
+  //     navigate(user.role === 'seller' ? '/dashboard' : '/products');
+  //   }
+  // }, [user, isLoading, navigate]);
 
   const value: AuthContextType = {
     user,
