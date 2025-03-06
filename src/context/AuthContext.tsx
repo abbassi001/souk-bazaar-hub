@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user, isLoading, navigate]);
 
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
     isLoading,
