@@ -7,6 +7,7 @@ import { AuthContextType, UserData } from '@/types/auth';
 import { fetchUserProfile } from '@/hooks/use-profile';
 import { useAuthOperations } from '@/hooks/use-auth-operations';
 
+// Create a context with default value undefined
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -63,7 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   //   }
   // }, [user, isLoading, navigate]);
 
-  const value: AuthContextType = {
+  const contextValue: AuthContextType = {
     user,
     session,
     isLoading,
@@ -72,7 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     signOut
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
